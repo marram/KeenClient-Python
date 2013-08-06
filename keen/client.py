@@ -1,6 +1,5 @@
 import copy
 from keen import persistence_strategies, exceptions
-from keen.api import KeenApi
 from keen.persistence_strategies import BasePersistenceStrategy
 from etro.utils.miscutils import json_default
 # Try to load the faster json, for local dev and tests
@@ -71,11 +70,11 @@ class KeenClient(object):
             # validate the given persistence strategy
             if not isinstance(persistence_strategy, BasePersistenceStrategy):
                 raise exceptions.InvalidPersistenceStrategyError()
+
         if not persistence_strategy:
             # setup a default persistence strategy
-            keen_api = KeenApi(project_id, write_key=write_key, read_key=read_key)
             persistence_strategy = persistence_strategies \
-                .DirectPersistenceStrategy(keen_api)
+                .DirectPersistenceStrategy(write_key, read_key)
 
         self.project_id = project_id
         self.persistence_strategy = persistence_strategy

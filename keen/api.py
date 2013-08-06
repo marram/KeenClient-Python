@@ -20,7 +20,7 @@ class KeenApi(object):
 
     def __init__(self, project_id,
                  write_key=None, read_key=None,
-                 base_url=None, api_version=None):
+                 base_url=None, api_version=None, async=False):
         """
         Initializes a KeenApi object
 
@@ -40,6 +40,7 @@ class KeenApi(object):
             self.base_url = base_url
         if api_version:
             self.api_version = api_version
+        self.async = async
 
     def post_event(self, event):
         """
@@ -57,6 +58,15 @@ class KeenApi(object):
                                                        event.collection_name)
         headers = {"Content-Type": "application/json", "Authorization": self.write_key}
         payload = event.to_json()
+
+        if self.async:
+            rpc = urlfetch.create_rpc()
+            urlfetch.make_fetch_call(rpc, url=url,
+                                    payload=payload,
+                                    method=urlfetch.POST,
+                                    headers=headers)
+            return rpc
+
         fetch = urlfetch.fetch(url=url,
                                 payload=payload,
                                 method=urlfetch.POST,

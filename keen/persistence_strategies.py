@@ -1,3 +1,4 @@
+from keen.api import KeenApi
 __author__ = 'dkador'
 
 
@@ -21,13 +22,19 @@ class DirectPersistenceStrategy(BasePersistenceStrategy):
     cache.
     """
 
-    def __init__(self, api):
+    def __init__(self, project_id, write_key, read_key):
         """ Initializer for DirectPersistenceStrategy.
 
         :param api: the Keen Api object used to communicate with the Keen API
         """
+        self.project_id = project_id
+        self.write_key = write_key
+        self.read_key = read_key
+        self.make_api()
         super(DirectPersistenceStrategy, self).__init__()
-        self.api = api
+
+    def make_api(self):
+        self.api = KeenApi(self.project_id, write_key=self.write_key, read_key=self.read_key)
 
     def persist(self, event):
         """ Posts the given event directly to the Keen API.
@@ -36,6 +43,9 @@ class DirectPersistenceStrategy(BasePersistenceStrategy):
         """
         self.api.post_event(event)
 
+class AsyncAPIStrategy(DirectPersistenceStrategy):
+    def make_api(self):
+        self.api = KeenApi(self.project_id, write_key=self.write_key, read_key=self.read_key, async=True)
 
 class RedisPersistenceStrategy(BasePersistenceStrategy):
     """
