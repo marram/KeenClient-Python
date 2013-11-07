@@ -1,4 +1,6 @@
 from google.appengine.api import urlfetch
+import logging
+import urllib
 from keen import exceptions
 try:
     import ujson as json
@@ -41,6 +43,30 @@ class KeenApi(object):
         if api_version:
             self.api_version = api_version
         self.async = async
+
+    def make_query_url(self, analysis_type):
+        url = "{0}/{1}/projects/{2}/queries/{3}".format(self.base_url, self.api_version,
+                                                       self.project_id, analysis_type)
+        return url
+
+    def make_analysis_query_url(self, analysis_type, event_collection, **kwargs):
+        url = self.make_query_url(analysis_type)
+        payload = dict(event_collection=event_collection, api_key=self.read_key)
+        payload.update(kwargs)
+        if "filters" in payload:
+            payload["filters"] = json.dumps(payload["filters"])
+        params = urllib.urlencode(payload)
+        url = "%s?%s" % (url, params)
+        return url
+
+    def query(self, analysis_type, event_collection, **kwargs):
+        url = self.make_query_url(analysis_type, event_collection, **kwargs)
+
+        fetch = urlfetch.fetch(url=url, method=urlfetch.GET)
+        response = json.loads(fetch.content)
+        if fetch.status_code != 200:
+            raise exceptions.KeenApiError(response)
+        return response
 
     def post_event(self, event):
         """
